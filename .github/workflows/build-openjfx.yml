@@ -19,8 +19,17 @@ jobs:
       - name: Clone OpenJDK Mobile sources 
         run: |
           git clone https://github.com/openjdk/mobile.git
-          cd openjdk
+          cd mobile
           patch -p1 <../openjdk-ext/src/jfx.patch
+          cd ..
           echo "DONE"
+      - name: Clone OpenJFX
+        run: |
+          git clone https://github.com/openjfx/jfx.git
+          cd mobile
+          sh configure --with-conf-name=jfx --with-openjfx-modules=../jfx --disable-warnings-as-errors
+          cd build/jfx
+          make images
+
 
 
