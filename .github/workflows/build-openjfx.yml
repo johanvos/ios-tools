@@ -1,14 +1,14 @@
 name: Build OpenJFX
 
 on:
-  workflow_dispatch
-  push
+  workflow_dispatch:
+  push:
     branches:
       - openjfxtest
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: "ubuntu-24.04"
 
     steps:
       - name: Set up JDK 24
