@@ -12,6 +12,8 @@ jobs:
 
     steps:
       - name: Set up JDK 24
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: actions/setup-java@v4
         with:
           java-version: '24'
