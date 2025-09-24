@@ -2,6 +2,9 @@ name: Build OpenJFX
 
 on:
   workflow_dispatch
+  push
+    branches:
+      - openjfxtest
 
 jobs:
   build:
@@ -13,4 +16,11 @@ jobs:
         with:
           java-version: '24'
           distribution: 'temurin'
+      - name: Clone OpenJDK Mobile sources 
+        run: |
+          git clone https://github.com/openjdk/mobile.git
+          cd openjdk
+          patch -p1 <../openjdk-ext/src/jfx.patch
+          echo "DONE"
+
 

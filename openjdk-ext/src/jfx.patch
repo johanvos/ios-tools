@@ -1,0 +1,263 @@
+diff --git a/make/autoconf/configure.ac b/make/autoconf/configure.ac
+index e05b5ae3b90..00cf14844a5 100644
+--- a/make/autoconf/configure.ac
++++ b/make/autoconf/configure.ac
+@@ -166,6 +166,7 @@ JDKOPT_SETUP_JDK_OPTIONS
+ 
+ SRCDIRS_SETUP_DIRS
+ SRCDIRS_SETUP_IMPORT_MODULES
++SRCDIRS_SETUP_OPENJFX_MODULES
+ 
+ ################################################################################
+ #
+diff --git a/make/autoconf/lib-bundled.m4 b/make/autoconf/lib-bundled.m4
+index 3246697663c..75fb2754fc2 100644
+--- a/make/autoconf/lib-bundled.m4
++++ b/make/autoconf/lib-bundled.m4
+@@ -41,6 +41,8 @@ AC_DEFUN_ONCE([LIB_SETUP_BUNDLED_LIBS],
+   LIB_SETUP_ZLIB
+   LIB_SETUP_LCMS
+   LIB_SETUP_HARFBUZZ
++  LIB_SETUP_GTK
++  LIB_SETUP_PANGO
+ ])
+ 
+ ################################################################################
+@@ -357,3 +359,89 @@ AC_DEFUN_ONCE([LIB_SETUP_HARFBUZZ],
+   AC_SUBST(HARFBUZZ_CFLAGS)
+   AC_SUBST(HARFBUZZ_LIBS)
+ ])
++
++################################################################################
++# Setup gtk
++################################################################################
++AC_DEFUN_ONCE([LIB_SETUP_GTK],
++[
++  AC_ARG_WITH(gtk, [AS_HELP_STRING([--with-gtk],
++      [use gtk from build system or OpenJDK source (system, bundled) @<:@bundled@:>@])])
++
++  AC_MSG_CHECKING([for which gtk to use])
++
++  DEFAULT_GTK=system
++
++  # If user didn't specify, use DEFAULT_GTK
++  if test "x${with_gtk}" = "x"; then
++    with_gtk=${DEFAULT_GTK}
++  fi
++
++  if test "x${with_gtk}" = "xbundled"; then
++    USE_EXTERNAL_GTK=false
++    GTK_CFLAGS=""
++    GTK_LIBS=""
++    AC_MSG_RESULT([bundled])
++  elif test "x${with_gtk}" = "xsystem"; then
++    AC_MSG_RESULT([system])
++    if test "x$OPENJDK_TARGET_OS" = xlinux; then
++      PKG_CHECK_MODULES([GTK], [gtk+-3.0 gthread-2.0 xtst gio-unix-2.0], [GTK_FOUND=yes], [GTK_FOUND=no])
++      if test "x${GTK_FOUND}" = "xyes"; then
++        # PKG_CHECK_MODULES will set GTK_CFLAGS and GTK_LIBS
++        USE_EXTERNAL_GTK=true
++      else
++        HELP_MSG_MISSING_DEPENDENCY([gtk])
++        AC_MSG_ERROR([--with-gtk=system specified, but no gtk found! $HELP_MSG])
++      fi
++    fi
++  else
++    AC_MSG_ERROR([Invalid value for --with-gtk: ${with_gtk}, use 'system' or 'bundled'])
++  fi
++
++  AC_SUBST(USE_EXTERNAL_GTK)
++  AC_SUBST(GTK_CFLAGS)
++  AC_SUBST(GTK_LIBS)
++])
++
++
++################################################################################
++# Setup pango
++################################################################################
++AC_DEFUN_ONCE([LIB_SETUP_PANGO],
++[
++  AC_ARG_WITH(gtk, [AS_HELP_STRING([--with-pango],
++      [use pango from build system or OpenJDK source (system, bundled) @<:@bundled@:>@])])
++
++  AC_MSG_CHECKING([for which pango to use])
++
++  DEFAULT_PANGO=system
++  # If user didn't specify, use DEFAULT_PANGO
++  if test "x${with_pango}" = "x"; then
++    with_pango=${DEFAULT_PANGO}
++  fi
++
++  if test "x${with_pango}" = "xbundled"; then
++    USE_EXTERNAL_PANGO=false
++    PANGO_CFLAGS=""
++    PANGO_LIBS=""
++    AC_MSG_RESULT([bundled])
++  elif test "x${with_pango}" = "xsystem"; then
++    AC_MSG_RESULT([system])
++    if test "x$OPENJDK_TARGET_OS" = xlinux; then
++      PKG_CHECK_MODULES([PANGO], [pangoft2], [PANGO_FOUND=yes], [PANGO_FOUND=no])
++      if test "x${PANGO_FOUND}" = "xyes"; then
++        # PKG_CHECK_MODULES will set PANGO_CFLAGS and PANGO_LIBS
++        USE_EXTERNAL_PANGO=true
++      else
++        HELP_MSG_MISSING_DEPENDENCY([pango])
++        AC_MSG_ERROR([--with-pango=system specified, but no pango found! $HELP_MSG])
++      fi
++    fi
++  else
++    AC_MSG_ERROR([Invalid value for --with-pango: ${with_pango}, use 'system' or 'bundled'])
++  fi
++
++  AC_SUBST(USE_EXTERNAL_PANGO)
++  AC_SUBST(PANGO_CFLAGS)
++  AC_SUBST(PANGO_LIBS)
++])
+diff --git a/make/autoconf/source-dirs.m4 b/make/autoconf/source-dirs.m4
+index ea7d583fba2..46aff9a0367 100644
+--- a/make/autoconf/source-dirs.m4
++++ b/make/autoconf/source-dirs.m4
+@@ -90,3 +90,51 @@ AC_DEFUN_ONCE([SRCDIRS_SETUP_IMPORT_MODULES],
+   AC_SUBST(IMPORT_MODULES_SRC)
+   AC_SUBST(IMPORT_MODULES_MAKE)
+ ])
++
++AC_DEFUN_ONCE([SRCDIRS_SETUP_OPENJFX_MODULES],
++[
++  AC_ARG_WITH(openjfx-modules, [AS_HELP_STRING([--with-openjfx-modules],
++      [import openjfx modules])])
++
++  if test "x$with_openjfx_modules" != x \
++      && test "x$with_openjfx_modules" != "xno"; then
++    if test -d "$with_openjfx_modules"; then
++      OPENJFX_MODULES_TOPDIR="$with_openjfx_modules"
++      UTIL_FIXUP_PATH([OPENJFX_MODULES_TOPDIR])
++    else
++      AC_MSG_ERROR([--with-openjfx-modules="$with_openjfx_modules" must point to a dir or a zip file])
++    fi
++  fi
++
++  if test -d "$OPENJFX_MODULES_TOPDIR/modules"; then
++    OPENJFX_MODULES_CLASSES="$OPENJFX_MODULES_TOPDIR/modules"
++  fi
++  if test -d "$OPENJFX_MODULES_TOPDIR/modules_cmds"; then
++    OPENJFX_MODULES_CMDS="$OPENJFX_MODULES_TOPDIR/modules_cmds"
++  fi
++  if test -d "$OPENJFX_MODULES_TOPDIR/modules_libs"; then
++    OPENJFX_MODULES_LIBS="$OPENJFX_MODULES_TOPDIR/modules_libs"
++  fi
++  if test -d "$OPENJFX_MODULES_TOPDIR/modules_conf"; then
++    OPENJFX_MODULES_CONF="$OPENJFX_MODULES_TOPDIR/modules_conf"
++  fi
++  if test -d "$OPENJFX_MODULES_TOPDIR/modules_legal"; then
++    OPENJFX_MODULES_LEGAL="$OPENJFX_MODULES_TOPDIR/modules_legal"
++  fi
++  if test -d "$OPENJFX_MODULES_TOPDIR/modules_man"; then
++    OPENJFX_MODULES_MAN="$OPENJFX_MODULES_TOPDIR/modules_man"
++  fi
++  OPENJFX_MODULES_SRC="$OPENJFX_MODULES_TOPDIR"
++  if test -d "$OPENJFX_MODULES_TOPDIR/make"; then
++    OPENJFX_MODULES_MAKE="$OPENJFX_MODULES_TOPDIR/make"
++  fi
++
++  AC_SUBST(OPENJFX_MODULES_CLASSES)
++  AC_SUBST(OPENJFX_MODULES_CMDS)
++  AC_SUBST(OPENJFX_MODULES_LIBS)
++  AC_SUBST(OPENJFX_MODULES_CONF)
++  AC_SUBST(OPENJFX_MODULES_LEGAL)
++  AC_SUBST(OPENJFX_MODULES_MAN)
++  AC_SUBST(OPENJFX_MODULES_SRC)
++  AC_SUBST(OPENJFX_MODULES_MAKE)
++])
+diff --git a/make/autoconf/spec.gmk.template b/make/autoconf/spec.gmk.template
+index e720916d88a..75bdb6f3b14 100644
+--- a/make/autoconf/spec.gmk.template
++++ b/make/autoconf/spec.gmk.template
+@@ -183,6 +183,15 @@ IMPORT_MODULES_MAN := @IMPORT_MODULES_MAN@
+ IMPORT_MODULES_SRC := @IMPORT_MODULES_SRC@
+ IMPORT_MODULES_MAKE := @IMPORT_MODULES_MAKE@
+ 
++OPENJFX_MODULES_CLASSES := @OPENJFX_MODULES_CLASSES@
++OPENJFX_MODULES_CMDS := @OPENJFX_MODULES_CMDS@
++OPENJFX_MODULES_LIBS := @OPENJFX_MODULES_LIBS@
++OPENJFX_MODULES_CONF := @OPENJFX_MODULES_CONF@
++OPENJFX_MODULES_LEGAL := @OPENJFX_MODULES_LEGAL@
++OPENJFX_MODULES_MAN := @OPENJFX_MODULES_MAN@
++OPENJFX_MODULES_SRC := @OPENJFX_MODULES_SRC@
++OPENJFX_MODULES_MAKE := @OPENJFX_MODULES_MAKE@
++
+ COPYRIGHT_YEAR := @COPYRIGHT_YEAR@
+ HOTSPOT_BUILD_TIME := @HOTSPOT_BUILD_TIME@
+ 
+@@ -831,6 +840,14 @@ USE_EXTERNAL_LIBPNG := @USE_EXTERNAL_LIBPNG@
+ PNG_LIBS := @PNG_LIBS@
+ PNG_CFLAGS := @PNG_CFLAGS@
+ 
++USE_EXTERNAL_LIBGTK := @USE_EXTERNAL_LIBGTK@
++GTK_LIBS := @GTK_LIBS@
++GTK_CFLAGS := @GTK_CFLAGS@
++
++USE_EXTERNAL_LIBPANGO := @USE_EXTERNAL_LIBPANGO@
++PANGO_LIBS := @PANGO_LIBS@
++PANGO_CFLAGS := @PANGO_CFLAGS@
++
+ # Misc
+ INCLUDE_SA := @INCLUDE_SA@
+ INCLUDE_JVMCI := @INCLUDE_JVMCI@
+diff --git a/make/common/Modules.gmk b/make/common/Modules.gmk
+index 725424d7618..ab8ff711fdd 100644
+--- a/make/common/Modules.gmk
++++ b/make/common/Modules.gmk
+@@ -95,11 +95,13 @@ MAN_DOCS_SUBDIRS += share/man windows/man
+ # Find all module-info.java files for the current build target platform and
+ # configuration.
+ # Param 1 - Module to find for, set to * for finding all
++
+ FindAllModuleInfos = \
+     $(sort $(wildcard \
+         $(foreach sub, $(SRC_SUBDIRS), \
+           $(patsubst %,%/$(strip $1)/$(sub)/module-info.java, $(TOP_SRC_DIRS))) \
+-        $(patsubst %,%/$(strip $1)/module-info.java, $(IMPORT_MODULES_SRC))))
++        $(patsubst %,%/$(strip $1)/module-info.java, $(IMPORT_MODULES_SRC)) \
++        $(patsubst %,%/modules/$(strip $1)/src/main/java/module-info.java, $(OPENJFX_MODULES_SRC))))
+ 
+ # Find module-info.java files in the specific source dir
+ # Param 1 - Src dir to find module-info.java files in
+@@ -117,8 +119,10 @@ FindModuleInfosForSrcDir = \
+ GetModuleNameFromModuleInfo = \
+     $(strip $(foreach mi, $1, \
+       $(if $(filter $(addsuffix %, $(IMPORT_MODULES_SRC)), $(mi)), \
+-        $(notdir $(patsubst %/,%, $(dir $(mi)))), \
+-        $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(mi)))))))))))
++        $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(mi)))))))))), \
++        $(if $(filter $(addsuffix %, $(OPENJFX_MODULES_SRC)), $(mi)), \
++          $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(mi)))))))))), \
++          $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(mi))))))))))))
+ 
+ # Find all modules by looking for module-info.java files and looking at parent
+ # directories.
+@@ -142,7 +146,11 @@ FindImportedModules = \
+ FindModuleSrcDirs = \
+     $(strip $(wildcard \
+         $(addsuffix /$(strip $1), $(GENERATED_SRC_DIRS) $(IMPORT_MODULES_SRC)) \
+-        $(foreach sub, $(SRC_SUBDIRS), $(addsuffix /$(strip $1)/$(sub), $(TOP_SRC_DIRS)))))
++        $(foreach sub, $(SRC_SUBDIRS), $(addsuffix /$(strip $1)/$(sub), $(TOP_SRC_DIRS))) \
++        $(OPENJFX_MODULES_SRC)/modules/$(strip $1)/src/main/java \
++        $(OPENJFX_MODULES_SRC)/modules/$(strip $1)/build/gensrc/jsl-decora \
++        $(OPENJFX_MODULES_SRC)/modules/$(strip $1)/build/gensrc/jsl-prism \
++        $(OPENJFX_MODULES_SRC)/modules/$(strip $1)/src/main/resources))
+ 
+ # Find all specs dirs for a particular module
+ # $1 - Module to find specs dirs for
+@@ -164,7 +172,10 @@ FindModuleManDirsForDocs = \
+ GetModuleSrcPath = \
+     $(call PathList, \
+         $(addsuffix /*, $(GENERATED_SRC_DIRS) $(IMPORT_MODULES_SRC)) \
+-        $(foreach sub, $(SRC_SUBDIRS), $(addsuffix /*/$(sub), $(TOP_SRC_DIRS))))
++        $(foreach sub, $(SRC_SUBDIRS), $(addsuffix /*/$(sub), $(TOP_SRC_DIRS))) \
++        $(addsuffix /*/build/gensrc/jsl-prism, $(OPENJFX_MODULES_SRC)/modules) \
++        $(addsuffix /*/build/gensrc/jsl-decora, $(OPENJFX_MODULES_SRC)/modules) \
++        $(addsuffix /*/src/main/java, $(OPENJFX_MODULES_SRC)/modules))
+ 
+ ################################################################################
+ # Extract module dependencies from module-info.java files, both normal
