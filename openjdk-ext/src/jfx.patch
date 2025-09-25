@@ -1,5 +1,23 @@
+diff --git a/README_OpenJFX.md b/README_OpenJFX.md
+new file mode 100644
+index 0000000000000..412f2115e37b8
+--- /dev/null
++++ b/README_OpenJFX.md
+@@ -0,0 +1,12 @@
++#Building OpenJDK with OpenJFX
++
++- make sure you have an OpenJFX clone locally, e.g. at /path/to/openjfx
++
++- configure: `configure --with-conf-name=jfx0326 --with-openjfx-modules=/path/to/openjfx --disable-warnings-as-errors`
++
++- build: 
++-- `cd build/jfx0326`
++-- `make jdk`
++
++
++
 diff --git a/make/autoconf/configure.ac b/make/autoconf/configure.ac
-index e05b5ae3b90..00cf14844a5 100644
+index 9eeded48fed02..9e4dec2d62eb3 100644
 --- a/make/autoconf/configure.ac
 +++ b/make/autoconf/configure.ac
 @@ -166,6 +166,7 @@ JDKOPT_SETUP_JDK_OPTIONS
@@ -11,7 +29,7 @@ index e05b5ae3b90..00cf14844a5 100644
  ################################################################################
  #
 diff --git a/make/autoconf/lib-bundled.m4 b/make/autoconf/lib-bundled.m4
-index 3246697663c..75fb2754fc2 100644
+index 091f01cadb5d7..80e04b8a48886 100644
 --- a/make/autoconf/lib-bundled.m4
 +++ b/make/autoconf/lib-bundled.m4
 @@ -41,6 +41,8 @@ AC_DEFUN_ONCE([LIB_SETUP_BUNDLED_LIBS],
@@ -23,7 +41,7 @@ index 3246697663c..75fb2754fc2 100644
  ])
  
  ################################################################################
-@@ -357,3 +359,89 @@ AC_DEFUN_ONCE([LIB_SETUP_HARFBUZZ],
+@@ -313,3 +315,89 @@ AC_DEFUN_ONCE([LIB_SETUP_HARFBUZZ],
    AC_SUBST(HARFBUZZ_CFLAGS)
    AC_SUBST(HARFBUZZ_LIBS)
  ])
@@ -114,7 +132,7 @@ index 3246697663c..75fb2754fc2 100644
 +  AC_SUBST(PANGO_LIBS)
 +])
 diff --git a/make/autoconf/source-dirs.m4 b/make/autoconf/source-dirs.m4
-index ea7d583fba2..46aff9a0367 100644
+index ea7d583fba2d9..46aff9a0367bb 100644
 --- a/make/autoconf/source-dirs.m4
 +++ b/make/autoconf/source-dirs.m4
 @@ -90,3 +90,51 @@ AC_DEFUN_ONCE([SRCDIRS_SETUP_IMPORT_MODULES],
@@ -170,7 +188,7 @@ index ea7d583fba2..46aff9a0367 100644
 +  AC_SUBST(OPENJFX_MODULES_MAKE)
 +])
 diff --git a/make/autoconf/spec.gmk.template b/make/autoconf/spec.gmk.template
-index e720916d88a..75bdb6f3b14 100644
+index a30936d7d455c..18ebb6fc1d3df 100644
 --- a/make/autoconf/spec.gmk.template
 +++ b/make/autoconf/spec.gmk.template
 @@ -183,6 +183,15 @@ IMPORT_MODULES_MAN := @IMPORT_MODULES_MAN@
@@ -189,7 +207,7 @@ index e720916d88a..75bdb6f3b14 100644
  COPYRIGHT_YEAR := @COPYRIGHT_YEAR@
  HOTSPOT_BUILD_TIME := @HOTSPOT_BUILD_TIME@
  
-@@ -831,6 +840,14 @@ USE_EXTERNAL_LIBPNG := @USE_EXTERNAL_LIBPNG@
+@@ -824,6 +833,14 @@ USE_EXTERNAL_LIBPNG := @USE_EXTERNAL_LIBPNG@
  PNG_LIBS := @PNG_LIBS@
  PNG_CFLAGS := @PNG_CFLAGS@
  
@@ -205,7 +223,7 @@ index e720916d88a..75bdb6f3b14 100644
  INCLUDE_SA := @INCLUDE_SA@
  INCLUDE_JVMCI := @INCLUDE_JVMCI@
 diff --git a/make/common/Modules.gmk b/make/common/Modules.gmk
-index 725424d7618..ab8ff711fdd 100644
+index f4f815c740db6..80097d909b57b 100644
 --- a/make/common/Modules.gmk
 +++ b/make/common/Modules.gmk
 @@ -95,11 +95,13 @@ MAN_DOCS_SUBDIRS += share/man windows/man
@@ -261,3 +279,264 @@ index 725424d7618..ab8ff711fdd 100644
  
  ################################################################################
  # Extract module dependencies from module-info.java files, both normal
+diff --git a/make/modules/javafx.base/Gensrc.gmk b/make/modules/javafx.base/Gensrc.gmk
+new file mode 100644
+index 0000000000000..5f0d4c95f3b05
+--- /dev/null
++++ b/make/modules/javafx.base/Gensrc.gmk
+@@ -0,0 +1,14 @@
++include GensrcCommon.gmk
++
++$(eval $(call SetupTextFileProcessing, BUILD_VERSION_JAVAFX, \
++    SOURCE_FILES := $(OPENJFX_MODULES_SRC)/modules/javafx.base/src/main/version-info/VersionInfo.java, \
++    OUTPUT_FILE := $(SUPPORT_OUTPUTDIR)/gensrc/javafx.base/com/sun/javafx/runtime/VersionInfo.java, \
++    REPLACEMENTS := \
++        @@BUILD_TIMESTAMP@@ => $(BUILD_TIMESTAMP) ; \
++        @@RELEASE_SUFFIX@@ => $(RELEASE_SUFFIX) ; \
++        @@RELEASE_VERSION_SHORT@@ => $(RUNTIME_VERSION) ; \
++        @@VERSION@@ => $(VERSION) ; \
++        @@RUNTIME_VERSION@@ => $(RUNTIME_VERSION), \
++))
++
++TARGETS += $(BUILD_VERSION_JAVAFX)
+diff --git a/make/modules/javafx.base/Java.gmk b/make/modules/javafx.base/Java.gmk
+new file mode 100644
+index 0000000000000..71537c155d0b8
+--- /dev/null
++++ b/make/modules/javafx.base/Java.gmk
+@@ -0,0 +1 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape
+diff --git a/make/modules/javafx.controls/Java.gmk b/make/modules/javafx.controls/Java.gmk
+new file mode 100644
+index 0000000000000..e91ce141a838b
+--- /dev/null
++++ b/make/modules/javafx.controls/Java.gmk
+@@ -0,0 +1,7 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape \
++                          lossy-conversions static auxiliaryclass exports fallthrough varargs identity
++JAVAC_FLAGS += -encoding UTF-8
++
++COPY += .gif .png .wav .txt .xml .css .pf
++CLEAN_FILES += $(wildcard \
++    $(TOPDIR)/src/javafx.controls/share/classes/com/sun/javafx/scene/control/skin/resources/*.properties )
+diff --git a/make/modules/javafx.fxml/Java.gmk b/make/modules/javafx.fxml/Java.gmk
+new file mode 100644
+index 0000000000000..82fcc6967bf49
+--- /dev/null
++++ b/make/modules/javafx.fxml/Java.gmk
+@@ -0,0 +1,3 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape \
++                          lossy-conversions static auxiliaryclass exports fallthrough varargs
++JAVAC_FLAGS += -encoding UTF-8
+diff --git a/make/modules/javafx.graphics/Java.gmk b/make/modules/javafx.graphics/Java.gmk
+new file mode 100644
+index 0000000000000..a892af72d470b
+--- /dev/null
++++ b/make/modules/javafx.graphics/Java.gmk
+@@ -0,0 +1,17 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape \
++                          lossy-conversions static auxiliaryclass exports fallthrough
++JAVAC_FLAGS += -encoding UTF-8
++
++COPY += .gif .png .wav .txt .xml .css .frag .properties
++
++SRC += $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/resources
++SRC += $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/build/gensrc/jsl-prism
++SRC += $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/build/gensrc/jsl-decora
++
++COPY_FILES += $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/build/gensrc/jsl-prism
++COPY_FILES += $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/build/gensrc/jsl-decora
++
++CLEAN_FILES += $(wildcard \
++    $(TOPDIR)/src/javafx.graphics/share/classes/com/sun/javafx/tk/quantum/*.properties)
++
++TARGETS += $(call CreateHkTargets, $(CLEAN_FILES))
+diff --git a/make/modules/javafx.graphics/Lib.gmk b/make/modules/javafx.graphics/Lib.gmk
+new file mode 100644
+index 0000000000000..42356af6f0ac0
+--- /dev/null
++++ b/make/modules/javafx.graphics/Lib.gmk
+@@ -0,0 +1,137 @@
++include CopyFiles.gmk
++include LibCommon.gmk
++
++# Hook to include the corresponding custom file, if present.
++$(eval $(call IncludeCustomExtension, modules/javafx.graphics/Lib.gmk))
++
++# Prepare the find cache.
++$(call FillFindCache, $(wildcard $(TOPDIR)/src/javafx.graphics/*/native))
++
++################################################################################
++## Build libprism
++################################################################################
++
++SRC_SHARE_PRISM= $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-prism-es2
++ifeq ($(call isTargetOs, linux), true)
++   PLATFORM_SRC := $(SRC_SHARE_PRISM)/x11
++endif
++ifeq ($(call isTargetOs, macosx), true)
++   PLATFORM_SRC := $(SRC_SHARE_PRISM)/macosx
++endif
++$(eval $(call SetupJdkLibrary, BUILD_LIBPRISM, \
++    NAME := prism_es2, \
++    OPTIMIZATION := HIGH, \
++    LIBS_linux := -lX11 -lXxf86vm -lGL, \
++    LIBS_macosx := -framework AppKit -framework ApplicationServices -framework Carbon -framework OpenGL -framework QuartzCore -framework Security, \
++    SRC := $(PLATFORM_SRC), \
++    EXTRA_FILES := $(SRC_SHARE_PRISM)/GLContext.c, \
++    EXTRA_FILES += $(SRC_SHARE_PRISM)/GLFactory.c, \
++    EXTRA_FILES += $(SRC_SHARE_PRISM)/GLPixelFormat.c, \
++    CFLAGS_macosx := -I$(SRC_SHARE_PRISM), \
++    CFLAGS := -Wno-error, \
++))
++
++TARGETS += $(BUILD_LIBPRISM)
++
++################################################################################
++## Build libglass
++################################################################################
++
++SRC_SHARE_GLASS= $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-glass
++ifeq ($(call isTargetOs, linux), true)
++   EXTRA_GLASS_SRC := $(SRC_SHARE_GLASS)/gtk/launcher.c
++endif
++ifeq ($(call isTargetOs, macosx), true)
++   PLATFORM_GLASS_SRC := $(SRC_SHARE_GLASS)/mac
++endif
++
++$(eval $(call SetupJdkLibrary, BUILD_LIBGLASS, \
++    NAME := glass, \
++    OPTIMIZATION := HIGH, \
++    SRC := $(PLATFORM_GLASS_SRC), \
++    LIBS_linux := -lX11, \
++    LIBS_macosx := -framework AppKit -framework ApplicationServices -framework Carbon -framework OpenGL -framework QuartzCore -framework Security -framework Network, \
++    EXTRA_FILES := $(EXTRA_GLASS_SRC), \
++    CFLAGS_macosx := -DMACOS_MIN_VERSION_MAJOR=11 -DMACOS_MIN_VERSION_MINOR=0, \
++))
++
++TARGETS += $(BUILD_LIBGLASS)
++
++ifeq ($(call isTargetOs, linux), true)
++################################################################################
++## Build libglassgtk3
++################################################################################
++
++$(info GTK_CF = $(GTK_CFLAGS))
++$(eval $(call SetupJdkLibrary, BUILD_LIBGLASSGTK3, \
++    NAME := glassgtk3, \
++    LINK_TYPE := C++, \
++    OPTIMIZATION := HIGH, \
++    CFLAGS := $(GTK_CFLAGS), \
++    CFLAGS += -I$(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-glass/gtk/libpipewire/include, \
++    EXCLUDE_FILES := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-glass/gtk/launcher.c, \
++    CXXFLAGS := $(GTK_CFLAGS), \
++    LIBS_linux := $(GTK_LIBS) -lX11 -ldl, \
++    SRC := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-glass/gtk, \
++))
++
++TARGETS += $(BUILD_LIBGLASSGTK3)
++endif
++
++################################################################################
++## Build libjavafx_font
++################################################################################
++
++$(eval $(call SetupJdkLibrary, BUILD_LIBJAVAFXFONT, \
++    NAME := javafx_font, \
++    LINK_TYPE := C++, \
++    OPTIMIZATION := HIGH, \
++    SRC := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-font, \
++    LIBS_macosx := -framework AppKit -framework ApplicationServices -framework Carbon -framework OpenGL -framework QuartzCore -framework Security, \
++))
++
++TARGETS += $(BUILD_LIBJAVAFXFONT)
++
++################################################################################
++## Build libjavafx_font_freetype
++################################################################################
++
++$(eval $(call SetupJdkLibrary, BUILD_LIBJAVAFXFONTFREETYPE, \
++    NAME := javafx_font_freetype, \
++    LINK_TYPE := C++, \
++    CFLAGS := $(FREETYPE_CFLAGS) -D_ENABLE_PANGO, \
++    OPTIMIZATION := HIGH, \
++    LIBS_linux := -lfreetype, \
++    EXTRA_FILES := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-font/freetype.c, \
++))
++
++TARGETS += $(BUILD_LIBJAVAFXFONTFREETYPE)
++
++################################################################################
++## Build libjavafx_font_pango
++################################################################################
++
++$(eval $(call SetupJdkLibrary, BUILD_LIBJAVAFXFONTPANGO, \
++    NAME := javafx_font_pango, \
++    LINK_TYPE := C++, \
++    CFLAGS := $(PANGO_CFLAGS) -D_ENABLE_PANGO, \
++    OPTIMIZATION := HIGH, \
++    LIBS_linux := $(PANGO_LIBS), \
++    EXTRA_FILES := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-font/pango.c, \
++))
++
++TARGETS += $(BUILD_LIBJAVAFXFONTPANGO)
++
++################################################################################
++## Build libjavafx_iio
++################################################################################
++
++$(eval $(call SetupJdkLibrary, BUILD_LIBJAVAFXIIO, \
++    NAME := javafx_iio, \
++    LINK_TYPE := C++, \
++    OPTIMIZATION := HIGH, \
++    SRC := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-iio/libjpeg, \
++    EXTRA_FILES := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-iio/jpegloader.c, \
++))
++
++TARGETS += $(BUILD_LIBJAVAFXIIO)
+diff --git a/make/modules/javafx.media/Java.gmk b/make/modules/javafx.media/Java.gmk
+new file mode 100644
+index 0000000000000..4ee4ef7f9d240
+--- /dev/null
++++ b/make/modules/javafx.media/Java.gmk
+@@ -0,0 +1,2 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape \
++                          lossy-conversions static auxiliaryclass exports fallthrough varargs 
+diff --git a/make/modules/javafx.swing/Java.gmk b/make/modules/javafx.swing/Java.gmk
+new file mode 100644
+index 0000000000000..22774b6d24768
+--- /dev/null
++++ b/make/modules/javafx.swing/Java.gmk
+@@ -0,0 +1,5 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape \
++                          lossy-conversions static auxiliaryclass exports fallthrough varargs
++JAVAC_FLAGS += -encoding UTF-8
++
++COPY += .gif .png .wav .txt .xml .css .pf
+diff --git a/make/modules/javafx.web/Java.gmk b/make/modules/javafx.web/Java.gmk
+new file mode 100644
+index 0000000000000..82fcc6967bf49
+--- /dev/null
++++ b/make/modules/javafx.web/Java.gmk
+@@ -0,0 +1,3 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape \
++                          lossy-conversions static auxiliaryclass exports fallthrough varargs
++JAVAC_FLAGS += -encoding UTF-8
+diff --git a/make/modules/jfx.incubator.input/Java.gmk b/make/modules/jfx.incubator.input/Java.gmk
+new file mode 100644
+index 0000000000000..82fcc6967bf49
+--- /dev/null
++++ b/make/modules/jfx.incubator.input/Java.gmk
+@@ -0,0 +1,3 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape \
++                          lossy-conversions static auxiliaryclass exports fallthrough varargs
++JAVAC_FLAGS += -encoding UTF-8
+diff --git a/make/modules/jfx.incubator.richtext/Java.gmk b/make/modules/jfx.incubator.richtext/Java.gmk
+new file mode 100644
+index 0000000000000..82fcc6967bf49
+--- /dev/null
++++ b/make/modules/jfx.incubator.richtext/Java.gmk
+@@ -0,0 +1,3 @@
++DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape \
++                          lossy-conversions static auxiliaryclass exports fallthrough varargs
++JAVAC_FLAGS += -encoding UTF-8
