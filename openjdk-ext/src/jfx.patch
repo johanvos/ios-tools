@@ -1,6 +1,12 @@
+commit 8f0fad6eaa6b3575009a03b0b88e850b8c8577f9
+Author: Johan Vos <johan@lodgon.com>
+Date:   Thu Sep 25 11:06:32 2025 +0200
+
+    Add javafx specific patch
+
 diff --git a/README_OpenJFX.md b/README_OpenJFX.md
 new file mode 100644
-index 0000000000000..412f2115e37b8
+index 00000000000..412f2115e37
 --- /dev/null
 +++ b/README_OpenJFX.md
 @@ -0,0 +1,12 @@
@@ -17,7 +23,7 @@ index 0000000000000..412f2115e37b8
 +
 +
 diff --git a/make/autoconf/configure.ac b/make/autoconf/configure.ac
-index 9eeded48fed02..9e4dec2d62eb3 100644
+index 2e608f893d6..9627f0f120e 100644
 --- a/make/autoconf/configure.ac
 +++ b/make/autoconf/configure.ac
 @@ -166,6 +166,7 @@ JDKOPT_SETUP_JDK_OPTIONS
@@ -29,7 +35,7 @@ index 9eeded48fed02..9e4dec2d62eb3 100644
  ################################################################################
  #
 diff --git a/make/autoconf/lib-bundled.m4 b/make/autoconf/lib-bundled.m4
-index 091f01cadb5d7..80e04b8a48886 100644
+index 3246697663c..75fb2754fc2 100644
 --- a/make/autoconf/lib-bundled.m4
 +++ b/make/autoconf/lib-bundled.m4
 @@ -41,6 +41,8 @@ AC_DEFUN_ONCE([LIB_SETUP_BUNDLED_LIBS],
@@ -41,7 +47,7 @@ index 091f01cadb5d7..80e04b8a48886 100644
  ])
  
  ################################################################################
-@@ -313,3 +315,89 @@ AC_DEFUN_ONCE([LIB_SETUP_HARFBUZZ],
+@@ -357,3 +359,89 @@ AC_DEFUN_ONCE([LIB_SETUP_HARFBUZZ],
    AC_SUBST(HARFBUZZ_CFLAGS)
    AC_SUBST(HARFBUZZ_LIBS)
  ])
@@ -132,7 +138,7 @@ index 091f01cadb5d7..80e04b8a48886 100644
 +  AC_SUBST(PANGO_LIBS)
 +])
 diff --git a/make/autoconf/source-dirs.m4 b/make/autoconf/source-dirs.m4
-index ea7d583fba2d9..46aff9a0367bb 100644
+index ea7d583fba2..46aff9a0367 100644
 --- a/make/autoconf/source-dirs.m4
 +++ b/make/autoconf/source-dirs.m4
 @@ -90,3 +90,51 @@ AC_DEFUN_ONCE([SRCDIRS_SETUP_IMPORT_MODULES],
@@ -188,7 +194,7 @@ index ea7d583fba2d9..46aff9a0367bb 100644
 +  AC_SUBST(OPENJFX_MODULES_MAKE)
 +])
 diff --git a/make/autoconf/spec.gmk.template b/make/autoconf/spec.gmk.template
-index a30936d7d455c..18ebb6fc1d3df 100644
+index 0b336721d65..7d7489e352c 100644
 --- a/make/autoconf/spec.gmk.template
 +++ b/make/autoconf/spec.gmk.template
 @@ -183,6 +183,15 @@ IMPORT_MODULES_MAN := @IMPORT_MODULES_MAN@
@@ -207,7 +213,7 @@ index a30936d7d455c..18ebb6fc1d3df 100644
  COPYRIGHT_YEAR := @COPYRIGHT_YEAR@
  HOTSPOT_BUILD_TIME := @HOTSPOT_BUILD_TIME@
  
-@@ -824,6 +833,14 @@ USE_EXTERNAL_LIBPNG := @USE_EXTERNAL_LIBPNG@
+@@ -834,6 +843,14 @@ USE_EXTERNAL_LIBPNG := @USE_EXTERNAL_LIBPNG@
  PNG_LIBS := @PNG_LIBS@
  PNG_CFLAGS := @PNG_CFLAGS@
  
@@ -223,10 +229,10 @@ index a30936d7d455c..18ebb6fc1d3df 100644
  INCLUDE_SA := @INCLUDE_SA@
  INCLUDE_JVMCI := @INCLUDE_JVMCI@
 diff --git a/make/common/Modules.gmk b/make/common/Modules.gmk
-index f4f815c740db6..80097d909b57b 100644
+index 3271b889867..a1ead0f6936 100644
 --- a/make/common/Modules.gmk
 +++ b/make/common/Modules.gmk
-@@ -95,11 +95,13 @@ MAN_DOCS_SUBDIRS += share/man windows/man
+@@ -102,11 +102,13 @@ MAN_DOCS_SUBDIRS += share/man windows/man
  # Find all module-info.java files for the current build target platform and
  # configuration.
  # Param 1 - Module to find for, set to * for finding all
@@ -241,7 +247,7 @@ index f4f815c740db6..80097d909b57b 100644
  
  # Find module-info.java files in the specific source dir
  # Param 1 - Src dir to find module-info.java files in
-@@ -117,8 +119,10 @@ FindModuleInfosForSrcDir = \
+@@ -124,8 +126,10 @@ FindModuleInfosForSrcDir = \
  GetModuleNameFromModuleInfo = \
      $(strip $(foreach mi, $1, \
        $(if $(filter $(addsuffix %, $(IMPORT_MODULES_SRC)), $(mi)), \
@@ -254,7 +260,7 @@ index f4f815c740db6..80097d909b57b 100644
  
  # Find all modules by looking for module-info.java files and looking at parent
  # directories.
-@@ -142,7 +146,11 @@ FindImportedModules = \
+@@ -149,7 +153,11 @@ FindImportedModules = \
  FindModuleSrcDirs = \
      $(strip $(wildcard \
          $(addsuffix /$(strip $1), $(GENERATED_SRC_DIRS) $(IMPORT_MODULES_SRC)) \
@@ -267,7 +273,7 @@ index f4f815c740db6..80097d909b57b 100644
  
  # Find all specs dirs for a particular module
  # $1 - Module to find specs dirs for
-@@ -164,7 +172,10 @@ FindModuleManDirsForDocs = \
+@@ -171,7 +179,10 @@ FindModuleManDirsForDocs = \
  GetModuleSrcPath = \
      $(call PathList, \
          $(addsuffix /*, $(GENERATED_SRC_DIRS) $(IMPORT_MODULES_SRC)) \
@@ -281,7 +287,7 @@ index f4f815c740db6..80097d909b57b 100644
  # Extract module dependencies from module-info.java files, both normal
 diff --git a/make/modules/javafx.base/Gensrc.gmk b/make/modules/javafx.base/Gensrc.gmk
 new file mode 100644
-index 0000000000000..5f0d4c95f3b05
+index 00000000000..5f0d4c95f3b
 --- /dev/null
 +++ b/make/modules/javafx.base/Gensrc.gmk
 @@ -0,0 +1,14 @@
@@ -301,14 +307,14 @@ index 0000000000000..5f0d4c95f3b05
 +TARGETS += $(BUILD_VERSION_JAVAFX)
 diff --git a/make/modules/javafx.base/Java.gmk b/make/modules/javafx.base/Java.gmk
 new file mode 100644
-index 0000000000000..71537c155d0b8
+index 00000000000..71537c155d0
 --- /dev/null
 +++ b/make/modules/javafx.base/Java.gmk
 @@ -0,0 +1 @@
 +DISABLED_WARNINGS_java := try deprecation rawtypes unchecked serial cast removal preview restricted dangling-doc-comments overloads module this-escape
 diff --git a/make/modules/javafx.controls/Java.gmk b/make/modules/javafx.controls/Java.gmk
 new file mode 100644
-index 0000000000000..e91ce141a838b
+index 00000000000..f84f785fb58
 --- /dev/null
 +++ b/make/modules/javafx.controls/Java.gmk
 @@ -0,0 +1,7 @@
@@ -321,7 +327,7 @@ index 0000000000000..e91ce141a838b
 +    $(TOPDIR)/src/javafx.controls/share/classes/com/sun/javafx/scene/control/skin/resources/*.properties )
 diff --git a/make/modules/javafx.fxml/Java.gmk b/make/modules/javafx.fxml/Java.gmk
 new file mode 100644
-index 0000000000000..82fcc6967bf49
+index 00000000000..82fcc6967bf
 --- /dev/null
 +++ b/make/modules/javafx.fxml/Java.gmk
 @@ -0,0 +1,3 @@
@@ -330,7 +336,7 @@ index 0000000000000..82fcc6967bf49
 +JAVAC_FLAGS += -encoding UTF-8
 diff --git a/make/modules/javafx.graphics/Java.gmk b/make/modules/javafx.graphics/Java.gmk
 new file mode 100644
-index 0000000000000..a892af72d470b
+index 00000000000..a892af72d47
 --- /dev/null
 +++ b/make/modules/javafx.graphics/Java.gmk
 @@ -0,0 +1,17 @@
@@ -353,10 +359,10 @@ index 0000000000000..a892af72d470b
 +TARGETS += $(call CreateHkTargets, $(CLEAN_FILES))
 diff --git a/make/modules/javafx.graphics/Lib.gmk b/make/modules/javafx.graphics/Lib.gmk
 new file mode 100644
-index 0000000000000..42356af6f0ac0
+index 00000000000..b00c524241c
 --- /dev/null
 +++ b/make/modules/javafx.graphics/Lib.gmk
-@@ -0,0 +1,137 @@
+@@ -0,0 +1,139 @@
 +include CopyFiles.gmk
 +include LibCommon.gmk
 +
@@ -430,6 +436,8 @@ index 0000000000000..42356af6f0ac0
 +    CFLAGS += -I$(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-glass/gtk/libpipewire/include, \
 +    EXCLUDE_FILES := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-glass/gtk/launcher.c, \
 +    CXXFLAGS := $(GTK_CFLAGS), \
++    CXXFLAGS += -DGTK_3_MIN_MINOR_VERSION=20, \
++    CXXFLAGS += -DGTK_3_MIN_MICRO_VERSION=0, \
 +    LIBS_linux := $(GTK_LIBS) -lX11 -ldl, \
 +    SRC := $(OPENJFX_MODULES_SRC)/modules/javafx.graphics/src/main/native-glass/gtk, \
 +))
@@ -496,7 +504,7 @@ index 0000000000000..42356af6f0ac0
 +TARGETS += $(BUILD_LIBJAVAFXIIO)
 diff --git a/make/modules/javafx.media/Java.gmk b/make/modules/javafx.media/Java.gmk
 new file mode 100644
-index 0000000000000..4ee4ef7f9d240
+index 00000000000..4ee4ef7f9d2
 --- /dev/null
 +++ b/make/modules/javafx.media/Java.gmk
 @@ -0,0 +1,2 @@
@@ -504,7 +512,7 @@ index 0000000000000..4ee4ef7f9d240
 +                          lossy-conversions static auxiliaryclass exports fallthrough varargs 
 diff --git a/make/modules/javafx.swing/Java.gmk b/make/modules/javafx.swing/Java.gmk
 new file mode 100644
-index 0000000000000..22774b6d24768
+index 00000000000..22774b6d247
 --- /dev/null
 +++ b/make/modules/javafx.swing/Java.gmk
 @@ -0,0 +1,5 @@
@@ -515,7 +523,7 @@ index 0000000000000..22774b6d24768
 +COPY += .gif .png .wav .txt .xml .css .pf
 diff --git a/make/modules/javafx.web/Java.gmk b/make/modules/javafx.web/Java.gmk
 new file mode 100644
-index 0000000000000..82fcc6967bf49
+index 00000000000..82fcc6967bf
 --- /dev/null
 +++ b/make/modules/javafx.web/Java.gmk
 @@ -0,0 +1,3 @@
@@ -524,7 +532,7 @@ index 0000000000000..82fcc6967bf49
 +JAVAC_FLAGS += -encoding UTF-8
 diff --git a/make/modules/jfx.incubator.input/Java.gmk b/make/modules/jfx.incubator.input/Java.gmk
 new file mode 100644
-index 0000000000000..82fcc6967bf49
+index 00000000000..82fcc6967bf
 --- /dev/null
 +++ b/make/modules/jfx.incubator.input/Java.gmk
 @@ -0,0 +1,3 @@
@@ -533,7 +541,7 @@ index 0000000000000..82fcc6967bf49
 +JAVAC_FLAGS += -encoding UTF-8
 diff --git a/make/modules/jfx.incubator.richtext/Java.gmk b/make/modules/jfx.incubator.richtext/Java.gmk
 new file mode 100644
-index 0000000000000..82fcc6967bf49
+index 00000000000..82fcc6967bf
 --- /dev/null
 +++ b/make/modules/jfx.incubator.richtext/Java.gmk
 @@ -0,0 +1,3 @@
